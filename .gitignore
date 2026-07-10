@@ -4,3 +4,4 @@
 data/uchiwake.datoms.kotoba.edn
 data/ingest/openfoodfacts.live.json
 out/
+.cpcache/
