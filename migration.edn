@@ -1,0 +1,9 @@
+{:migration/id :uchiwake/standalone-cutover
+ :status :complete
+ :source/root "20-actors/uchiwake"
+ :target/repository "orgs/etzhayyim/com-etzhayyim-uchiwake"
+ :canonical/format :edn
+ :wire/root "wire"
+ :pruned #{:go :tinygo :shell}
+ :root/cleanup ["20-actors/uchiwake"
+                "00-contracts/lexicons/com/etzhayyim/uchiwake"]}

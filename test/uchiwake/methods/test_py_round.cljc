@@ -1,6 +1,6 @@
 #!/usr/bin/env bb
 ;; uchiwake 内訳 — gold-standard parity validation of the Python-round() mirror.
-;; Run:  bb --classpath 20-actors 20-actors/uchiwake/methods/test_py_round.cljc
+;; Run:  bb test/uchiwake/methods/test_py_round.cljc
 (ns uchiwake.methods.test-py-round
   "Gold-standard parity validation of py-round / py-round-2 — uchiwake's CPython round() mirror used
   to round BOM quantities and measurements. Pins it against CPython's round(x, n): banker's rounding
@@ -31,8 +31,3 @@
 (deftest py-round-2-is-py-round-at-two-places
   (is (= (u/py-round 2.675 2) (u/py-round-2 2.675)))
   (is (= 0.12 (u/py-round-2 0.125)) "half-even at 2 dp: 0.125 (exactly representable) → 0.12 (even)"))
-
-#?(:clj
-   (when (= *file* (System/getProperty "babashka.file"))
-     (let [{:keys [fail error]} (run-tests 'uchiwake.methods.test-py-round)]
-       (System/exit (if (zero? (+ fail error)) 0 1)))))

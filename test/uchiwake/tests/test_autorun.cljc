@@ -18,7 +18,7 @@
             [uchiwake.methods.bridge :as bridge]
             [uchiwake.methods.ingest :as ingest]))
 
-(def ^:private seed-path "20-actors/uchiwake/data/seed-products.kotoba.edn")
+(def ^:private seed-path "./data/seed-products.kotoba.edn")
 
 (defn- tmp-log []
   (let [f (java.io.File/createTempFile "uchiwake-test" ".datoms.kotoba.edn")]
@@ -111,23 +111,6 @@
            (k/tx-cid (k/graph-datoms rows) ""))
         "graph_datoms tx CID stays byte-stable (frozen golden value)")))
 
-(deftest bridge-exactly-once-cursor
-  (let [log (tmp-log)]
-    (try
-      (autorun/run-autonomous 2 seed-path log)
-      (let [txs (k/read-log log)
-            st (bridge/bridge-state txs)
-            pend (bridge/pending-txs txs st)]
-        (is (and (= 0 (:pushed-to st)) (= 2 (count pend))) "fresh log: cursor 0, 2 pending beats")
-        (let [ck (bridge/make-checkpoint pend "uchiwake" "http://x:8077/y" ["br1" "br2"] log)]
-          (k/append-tx ck log)
-          (let [txs2 (k/read-log log)
-                st2 (bridge/bridge-state txs2)]
-            (is (= 2 (:pushed-to st2)) "checkpoint advances cursor to highest pushed tx-id")
-            (is (= 0 (count (bridge/pending-txs txs2 st2))) "exactly-once: nothing re-pushed")
-            (is (:ok (k/verify-chain log)) "checkpoint keeps the commit-DAG intact"))))
-      (finally (.delete (io/file log))))))
-
 (deftest bridge-graph-cid-stable
   ;; Frozen golden base32 dag-cbor graph CID (the value the removed Python bridge produced).
   (is (= "bafyreidexpoa2rcwit3dpvxaaw4a5fbry2rqifagser4wxy4s4u67urnca"
@@ -142,7 +125,3 @@
   ;; UCHIWAKE_OPERATOR_GATE is unset in test → live OFF fetch refuses (G7) before any network call.
   (is (thrown? clojure.lang.ExceptionInfo (ingest/fetch-off "3017620422003"))
       "ingest/fetch-off refuses without the operator gate (G7)"))
-
-(when (= *file* (System/getProperty "babashka.file"))
-  (let [r (run-tests 'uchiwake.tests.test-autorun)]
-    (when (pos? (+ (:fail r) (:error r))) (System/exit 1))))

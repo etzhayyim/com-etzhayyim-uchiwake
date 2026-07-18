@@ -1,6 +1,6 @@
 ;; uchiwake 内訳 — seed graph of the world's TRADE ITEMS (products) decomposed to their
 ;; bill of materials: PRODUCT → PART → raw MATERIAL, + PROCESS / LOGISTICS / DESIGN refs.
-;; ADR-2606081800 · vocabulary: product-bom-ontology.kotoba.edn (00-contracts/schemas/)
+;; ADR-2606081800 · vocabulary: product-bom-ontology.kotoba.edn (contracts/schemas/)
 ;;
 ;; SCOPE: a bounded illustrative slice of the world's GTIN-identified trade items as a kotoba
 ;;   EAVT knowledge graph — the PRODUCT (GTIN, brand, brand-owner→kabuto org.corp.*, GS1 prefix,

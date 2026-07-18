@@ -1,0 +1,5 @@
+{:repository/id "com-etzhayyim-uchiwake"
+ :actor/id "uchiwake"
+ :layout :west-flat-multirepo
+ :canonical-format :edn
+ :wire-formats #{:json :json-ld :bpmn}}

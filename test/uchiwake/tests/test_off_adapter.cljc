@@ -94,8 +94,7 @@
 (defn- read-json [^String s] (first (json-value s (skip-ws s 0))))
 
 (def ^:private sample-path
-  #?(:clj (io/file (-> *file* io/file .getParentFile .getParentFile)
-                   "data" "ingest" "openfoodfacts.sample.json")
+  #?(:clj (io/file "." "wire" "data" "openfoodfacts.sample.json")
      :cljs nil))
 
 (def records #?(:clj (read-json (slurp sample-path)) :cljs []))

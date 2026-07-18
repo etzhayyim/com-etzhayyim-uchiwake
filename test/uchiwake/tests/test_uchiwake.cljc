@@ -19,9 +19,9 @@
             [uchiwake.methods.uchiwake-edn :as uedn]
             [uchiwake.methods.analyze :as A]))
 
-(def actor-dir (-> *file* io/file .getParentFile .getParentFile))
+(def actor-dir (io/file "."))
 (def seed (io/file actor-dir "data" "seed-products.kotoba.edn"))
-(def schema (io/file actor-dir ".." ".." "00-contracts" "schemas" "product-bom-ontology.kotoba.edn"))
+(def schema (io/file actor-dir "contracts" "schemas" "product-bom-ontology.kotoba.edn"))
 
 (defn load-rows [] (uedn/read-edn (slurp seed)))
 (defn classify-seed [] (uedn/classify (load-rows)))

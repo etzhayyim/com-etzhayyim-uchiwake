@@ -12,7 +12,7 @@
   be [0x01 0x71 0x12 0x20] ++ sha256(name) — i.e. a CORRECT CIDv1 (dag-cbor, sha2-256 multihash),
   not merely self-consistent. Pinned literals additionally prove cross-process reproducibility.
 
-  Run:  bb --classpath 20-actors 20-actors/uchiwake/methods/test_bridge.clj"
+  Run:  bb test/uchiwake/methods/test_bridge.clj"
   (:require [uchiwake.methods.bridge :as b]
             [uchiwake.methods.kotoba :as k]
             [clojure.java.io :as io]
@@ -133,7 +133,3 @@
                  (catch clojure.lang.ExceptionInfo ex ex))]
       (is (some? e) "push must throw without the live gate")
       (is (= :G7 (:gate (ex-data e)))))))
-
-(when (= *file* (System/getProperty "babashka.file"))
-  (let [{:keys [fail error]} (run-tests 'uchiwake.methods.test-bridge)]
-    (System/exit (if (zero? (+ fail error)) 0 1))))

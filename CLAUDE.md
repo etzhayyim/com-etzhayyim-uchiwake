@@ -42,7 +42,7 @@
 
 ## Vocabulary
 
-`00-contracts/schemas/product-bom-ontology.kotoba.edn`:
+`contracts/schemas/product-bom-ontology.kotoba.edn`:
 - `:product/*` — a trade item keyed on the GTIN (normalized GTIN-14), brand, brand-owner
   (→ kabuto `:company/id`), GS1 prefix + prefix-country, GPC/UNSPSC/HS classification.
 - `:part/*` — a sub-assembly / component / ingredient / packaging node.
@@ -58,22 +58,22 @@
 
 ## Cells
 
-- `cell:uchiwake.ingest` → `methods/ingest.py` — public product source → kotoba EAVT bridge
+- `cell:uchiwake.ingest` → `src/uchiwake/methods/ingest.cljc` — public product source → kotoba EAVT bridge
   (offline default; live G7-gated). Documents the GS1 GDSN / GLEIF RR / Open Product Data path.
   Validates the GS1 check digit before admitting any product datom.
-- `cell:uchiwake.analyze` → `methods/analyze.py` (stdlib). recursive BOM material-closure →
+- `cell:uchiwake.analyze` → `src/uchiwake/methods/analyze.cljc` (stdlib). recursive BOM material-closure →
   material dependence → processing-jurisdiction load → ultimate-parent rollup (子会社) →
   single-source/high-criticality edges. Aggregate-first. Idempotent.
-- `cell:uchiwake.crosscheck` → `methods/crosscheck.py` (stdlib). resolves every uchiwake company
+- `cell:uchiwake.crosscheck` → `src/uchiwake/methods/crosscheck.cljc` (stdlib). resolves every uchiwake company
   reference (brand-owner/supplier/operator/carrier/ownership) against kabuto's ingested company
   universe → MEASURED linkage % + 子会社 rollup recovery + honest not-yet-ingested gap. Measures
   cross-actor supply-chain integration; does not assert it.
-- `cell:uchiwake.autorun` → `methods/autorun.cljc` (+ `methods/kotoba.cljc`) — **clj-native SSoT**
+- `cell:uchiwake.autorun` → `src/uchiwake/methods/autorun.cljc` (+ `src/uchiwake/methods/kotoba.cljc`) — **clj-native SSoT**
   (ADR-2606142300 D1: new logic-core is authored in Clojure, no Python twin). The autonomous
   Murakumo-fleet heartbeat. Each cycle observes the OFFLINE merged product graph → recursive BOM
   material-closure → material dependence + processing-jurisdiction load + ultimate-parent rollup
   (子会社) → **persists a content-addressed transaction** (graph datoms + derived `:concentration`)
-  to the append-only **local** kotoba Datom log (`methods/kotoba.cljc`), linking the previous tx's
+  to the append-only **local** kotoba Datom log (`src/uchiwake/methods/kotoba.cljc`), linking the previous tx's
   CID into a verifiable commit-DAG. Deterministic / resume-safe (cycle drives tx-id + as-of → same
   CIDs; derived sorted by id); NO external I/O. **G2/G4/G5 hold by construction**: only public
   trade-item facts + transparent concentration are representable — every derived `:concentration/*`
@@ -82,7 +82,7 @@
   push stay Council + operator gated (G7). Invariants guarded by `tests/test_autorun.cljc`
   (commit-DAG verify, tamper-detect, determinism, append-only, G5 derived-:synthesized, G2/G4
   not-target/not-recipe, exactly-once cursor, G7 ingest+push gate-refusal, frozen golden CIDs).
-- `cell:uchiwake.bridge` → `methods/bridge.clj` — **clj-native SSoT**. LOCAL→LIVE kotoba-node push
+- `cell:uchiwake.bridge` → `src/uchiwake/methods/bridge.clj` — **clj-native SSoT**. LOCAL→LIVE kotoba-node push
   leg (ibuki pattern): replays an exactly-once `:bridge/*` cursor off the local log, pushes only
   un-pushed heartbeat txs to the live `datomic.transact` node with `:uchiwake.tx/*` provenance,
   then appends ONE checkpoint. Gated by `UCHIWAKE_KOTOBA_LIVE=1` (Council + operator); the
@@ -104,20 +104,20 @@ reproduce dict insertion order (CID parity).
 ## Run
 
 ```bash
-cd 20-actors/uchiwake
-python3 methods/ingest.py            # offline: bridge data/ingest/*.json + seed (twin: ingest.py↔ingest.clj)
-python3 methods/analyze.py            # → out/intel-report.md + out/product-criticality.kotoba.edn
+cd .
+bb -m uchiwake.methods.ingest            # offline: bridge wire/data/*.json + seed (cljc-native; ADR-2606261200)
+bb -m uchiwake.methods.analyze            # → out/intel-report.md + out/product-criticality.kotoba.edn
 python3 -m unittest tests.test_uchiwake -v   # 21 tests (twins: ingest/analyze/crosscheck)
 # live ingest (G7-gated, twin):
-UCHIWAKE_OPERATOR_GATE=1 python3 methods/ingest.py --live --gtin 3017620422003  # OFF fetch (Nutella)
+UCHIWAKE_OPERATOR_GATE=1 UCHIWAKE_OPERATOR_GATE=1 bb -m uchiwake.methods.ingest --live --gtin 3017620422003  # OFF fetch (Nutella)
 
 # clj-native heartbeat + bridge (SSoT — Clojure, no Python twin):
-bb -cp 20-actors -e "(require 'uchiwake.methods.autorun)(apply uchiwake.methods.autorun/-main [\"--cycles\" \"3\" \"--fresh\"])"
-bb -cp 20-actors -e "(require 'uchiwake.methods.bridge)(apply uchiwake.methods.bridge/-main [\"--status\"])"
-bb -cp 20-actors -e "(require 'uchiwake.tests.test-autorun 'clojure.test)(clojure.test/run-tests 'uchiwake.tests.test-autorun)"
+bb -e "(require 'uchiwake.methods.autorun)(apply uchiwake.methods.autorun/-main [\"--cycles\" \"3\" \"--fresh\"])"
+bb -e "(require 'uchiwake.methods.bridge)(apply uchiwake.methods.bridge/-main [\"--status\"])"
+bb -e "(require 'uchiwake.tests.test-autorun 'clojure.test)(clojure.test/run-tests 'uchiwake.tests.test-autorun)"
 ```
 
-`python3 methods/analyze.py` with no argument runs the **seed** graph alone.
+`bb -m uchiwake.methods.analyze` with no argument runs the **seed** graph alone.
 
 ## Honesty (R0)
 
